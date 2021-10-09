@@ -1,9 +1,10 @@
 package models
 
+import uuid "github.com/satori/go.uuid"
+
 type Category struct {
-	ID     uint   `json:"id" gorm:"primary_key"`
-	Name   string `json:"name"`
-	UserId uint   `json:"user_id"`
-	Task   Task
 	Base
+	Name   string    `json:"name"`
+	UserId uuid.UUID `gorm:"type:char(36);not null;"`
+	Task   Task      `gorm:"foreignKey:CategoryId"`
 }

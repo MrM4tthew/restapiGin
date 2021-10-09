@@ -11,4 +11,5 @@ func addUsers(rg *gin.RouterGroup) {
 	route.GET("/", controllers.GetUsers)
 	route.GET("/:id", controllers.GetUser)
 	route.POST("/register", controllers.Register)
+	route.POST("/login", controllers.Login)
 }

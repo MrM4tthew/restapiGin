@@ -3,6 +3,7 @@ package controllers
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
+	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"restapiGin/models"
 )
@@ -28,7 +29,7 @@ func GetUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": users})
 }
 
-// GET /task/:id
+// GET /users/:id
 func GetUser(c *gin.Context) {
 	var user models.User
 
@@ -48,11 +49,52 @@ func Register(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
 
+	// Bcrypt password
+	hash, _ := HashPassword(input.Password)
+
 	// Create user
-	user := models.User{Name: input.Name, Username: input.Username, Email: input.Email, Password: input.Password}
+	user := models.User{Name: input.Name, Username: input.Username, Email: input.Email, Password: hash}
 
 	db := c.MustGet("db").(*gorm.DB)
 	db.Create(&user)
 
 	c.JSON(http.StatusOK, gin.H{"message": "Registered successfully"})
+}
+
+func Login(c *gin.Context) {
+	// Validate input
+	var input LoginUserInput
+	var user models.User
+	db := c.MustGet("db").(*gorm.DB)
+	// Check input first
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	} else {
+		// Do this if input is successfully executed
+		// Check if user is in database
+		if err2 := db.Where("email = ?", input.Email).First(&user).Error; err2 != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Record not found!"})
+			return
+		} else {
+			match := CheckPasswordHash(input.Password, user.Password)
+			if match == false {
+				c.JSON(http.StatusUnauthorized, gin.H{"message": "wrong password"})
+			} else {
+				c.JSON(http.StatusOK, gin.H{"data": "user is in"})
+			}
+		}
+
+	}
+
+}
+
+// Password Bcrypt function
+func HashPassword(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	return string(bytes), err
+}
+
+func CheckPasswordHash(password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
 }

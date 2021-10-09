@@ -1,16 +1,16 @@
 package models
 
 import (
+	uuid "github.com/satori/go.uuid"
 	"time"
 )
 
 type Task struct {
-	ID         uint      `json:"id" gorm:"primary_key"`
+	Base
 	AssingedTo string    `json:"assignedTo"`
 	Task       string    `json:"task"`
 	Deadline   time.Time `json:"deadline"`
 	Done       bool      `json:"done"`
-	UserId     uint      `json:"user_id"`
-	CategoryId uint      `json:"category_id"`
-	Base
+	UserId     uuid.UUID `gorm:"type:char(36);not null;"`
+	CategoryId uuid.UUID `gorm:"type:char(36);"`
 }
