@@ -1,11 +1,13 @@
 package controllers
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"restapiGin/models"
+	"restapiGin/service"
 )
 
 type RegisterUserInput struct {
@@ -65,7 +67,9 @@ func Login(c *gin.Context) {
 	// Validate input
 	var input LoginUserInput
 	var user models.User
+
 	db := c.MustGet("db").(*gorm.DB)
+
 	// Check input first
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -76,12 +80,18 @@ func Login(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Record not found!"})
 			return
 		} else {
-			match := CheckPasswordHash(input.Password, user.Password)
-			if match == false {
+			if match := CheckPasswordHash(input.Password, user.Password); match == false {
 				c.JSON(http.StatusUnauthorized, gin.H{"message": "wrong password"})
 			} else {
-				c.JSON(http.StatusOK, gin.H{"data": "user is in"})
+				tokenString, err3 := service.GenerateJWT(user.Username, user.Email)
+
+				if err3 != nil {
+					fmt.Println("Error generating token string")
+				}
+
+				c.JSON(http.StatusOK, gin.H{"data": tokenString})
 			}
+
 		}
 
 	}

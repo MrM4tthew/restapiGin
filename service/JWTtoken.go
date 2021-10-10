@@ -3,19 +3,19 @@ package service
 import (
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
+	"restapiGin/environment"
 	"time"
 )
 
-// var mySigningKey = os.Get("MY_JWT_TOKEN")
-var mySigningKey = []byte("mysupersecretphrase")
+var mySigningKey = environment.ViperEnvVariable("JWT_SECRET")
 
-func GenerateJWT() (string, error) {
+func GenerateJWT(username string, email string) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 
 	claims := token.Claims.(jwt.MapClaims)
 
-	claims["authorized"] = true
-	claims["user"] = "Matthew Bennett"
+	claims["username"] = username
+	claims["email"] = email
 	claims["exp"] = time.Now().Add(time.Minute * 30).Unix()
 
 	tokenString, err := token.SignedString(mySigningKey)
