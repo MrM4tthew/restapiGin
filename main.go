@@ -1,24 +1,22 @@
 package main
 
 import (
-	"github.com/go-redis/redis/v7"
-	"restapiGin/environment"
 	"restapiGin/models"
 	"restapiGin/routes"
 )
 
-var client *redis.Client
+//var client *redis.Client
 
-func init() {
-	//Initializing redis
-	client = redis.NewClient(&redis.Options{
-		Addr: environment.ViperEnvVariable("localhost:6379"), //redis port
-	})
-	_, err := client.Ping().Result()
-	if err != nil {
-		panic(err)
-	}
-}
+//func init() {
+//	//Initializing redis
+//	client = redis.NewClient(&redis.Options{
+//		Addr: environment.ViperEnvVariable("localhost:6379"), //redis port
+//	})
+//	_, err := client.Ping().Result()
+//	if err != nil {
+//		panic(err)
+//	}
+//}
 
 func main() {
 

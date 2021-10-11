@@ -83,7 +83,8 @@ func Login(c *gin.Context) {
 			if match := CheckPasswordHash(input.Password, user.Password); match == false {
 				c.JSON(http.StatusUnauthorized, gin.H{"message": "wrong password"})
 			} else {
-				tokenString, err3 := service.GenerateJWT(user.Username, user.Email)
+				tokenString, err3 := service.CreateToken(user.Username, user.Email)
+				//tokenString, err3 := service.CreateToken(user.ID, user.Username, user.Email)
 
 				if err3 != nil {
 					fmt.Println("Error generating token string")
