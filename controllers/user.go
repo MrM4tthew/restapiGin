@@ -6,6 +6,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"restapiGin/models"
+	"restapiGin/service"
 )
 
 type RegisterUserInput struct {
@@ -65,7 +66,9 @@ func Login(c *gin.Context) {
 	// Validate input
 	var input LoginUserInput
 	var user models.User
+
 	db := c.MustGet("db").(*gorm.DB)
+
 	// Check input first
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -76,16 +79,48 @@ func Login(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Record not found!"})
 			return
 		} else {
-			match := CheckPasswordHash(input.Password, user.Password)
-			if match == false {
+			if match := CheckPasswordHash(input.Password, user.Password); match == false {
 				c.JSON(http.StatusUnauthorized, gin.H{"message": "wrong password"})
 			} else {
-				c.JSON(http.StatusOK, gin.H{"data": "user is in"})
+				//tokenString, err3 := service.CreateToken(user.Username, user.Email)
+				tokenString, err3 := service.CreateToken(user.ID, user.Username, user.Email)
+
+				if err3 != nil {
+					c.JSON(http.StatusUnprocessableEntity, err3.Error())
+					return
+				}
+
+				saveErr := service.CreateAuth(user.ID, tokenString)
+				if saveErr != nil {
+					c.JSON(http.StatusUnprocessableEntity, saveErr.Error())
+					return
+				}
+
+				tokens := map[string]string {
+					"access_token": tokenString.AccessToken,
+					"refresh_token": tokenString.RefreshToken,
+				}
+
+				//c.JSON(http.StatusOK, gin.H{"data": tokens})
+				c.JSON(http.StatusOK, gin.H{"data": tokens, "userid": user.ID})
 			}
+
 		}
 
 	}
 
+}
+
+func Logout(c *gin.Context) {
+	au, err := service.ExtractTokenMetadata(c.Request)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
+	}
+	deleted, delErr := service.DeleteAuth(au.AccessUuid)
+	if delErr != nil || deleted == 0 {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Successfully logged out"})
 }
 
 // Password Bcrypt function
