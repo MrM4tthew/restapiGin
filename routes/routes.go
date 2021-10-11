@@ -15,6 +15,7 @@ func SetupRoutes(db *gorm.DB) *gin.Engine {
 
 	addUsers(api)
 	addTasks(api)
+	addCategories(api)
 
 	return r
 }

@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 	"golang.org/x/crypto/bcrypt"
@@ -83,20 +82,45 @@ func Login(c *gin.Context) {
 			if match := CheckPasswordHash(input.Password, user.Password); match == false {
 				c.JSON(http.StatusUnauthorized, gin.H{"message": "wrong password"})
 			} else {
-				tokenString, err3 := service.CreateToken(user.Username, user.Email)
-				//tokenString, err3 := service.CreateToken(user.ID, user.Username, user.Email)
+				//tokenString, err3 := service.CreateToken(user.Username, user.Email)
+				tokenString, err3 := service.CreateToken(user.ID, user.Username, user.Email)
 
 				if err3 != nil {
-					fmt.Println("Error generating token string")
+					c.JSON(http.StatusUnprocessableEntity, err3.Error())
+					return
 				}
 
-				c.JSON(http.StatusOK, gin.H{"data": tokenString})
+				saveErr := service.CreateAuth(user.ID, tokenString)
+				if saveErr != nil {
+					c.JSON(http.StatusUnprocessableEntity, saveErr.Error())
+					return
+				}
+
+				tokens := map[string]string {
+					"access_token": tokenString.AccessToken,
+					"refresh_token": tokenString.RefreshToken,
+				}
+
+				//c.JSON(http.StatusOK, gin.H{"data": tokens})
+				c.JSON(http.StatusOK, gin.H{"data": tokens, "userid": user.ID})
 			}
 
 		}
 
 	}
 
+}
+
+func Logout(c *gin.Context) {
+	au, err := service.ExtractTokenMetadata(c.Request)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
+	}
+	deleted, delErr := service.DeleteAuth(au.AccessUuid)
+	if delErr != nil || deleted == 0 {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Successfully logged out"})
 }
 
 // Password Bcrypt function

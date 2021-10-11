@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 	"restapiGin/models"
+	"restapiGin/service"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -12,23 +13,45 @@ import (
 type CreateTaskInput struct {
 	AssingedTo string `json:"assignedTo"`
 	Task       string `json:"task"`
-	Deadline   string `json:"deadline`
+	Deadline   string `json:"deadline"`
 }
 
 type UpdateTaskInput struct {
 	AssingedTo string `json:"assignedTo"`
 	Task       string `json:"task"`
-	Deadline   string `json:"deadline`
+	Deadline   string `json:"deadline"`
 }
 
 // GET /tasks
 // Get all tasks
 func FindTasks(c *gin.Context) {
+	tokenAuth, err := service.ExtractTokenMetadata(c.Request)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "unauthorized 1", "err": err})
+	}
+	userId, err := service.FetchAuth(tokenAuth)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "unauthorized 2", "err": err})
+	}
 	db := c.MustGet("db").(*gorm.DB)
 	var tasks []models.Task
-	db.Find(&tasks)
+	db.Where("id = ?", userId).Find(&tasks)
 
 	c.JSON(http.StatusOK, gin.H{"data": tasks})
+}
+
+// GET /tasks/:id
+// Find a task
+func FindTask(c *gin.Context) { // Get model if exist
+	var task models.Task
+
+	db := c.MustGet("db").(*gorm.DB)
+	if err := db.Where("id = ?", c.Param("id")).First(&task).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Record not found!"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": task})
 }
 
 // POST /tasks
@@ -48,20 +71,6 @@ func CreateTask(c *gin.Context) {
 
 	db := c.MustGet("db").(*gorm.DB)
 	db.Create(&task)
-
-	c.JSON(http.StatusOK, gin.H{"data": task})
-}
-
-// GET /tasks/:id
-// Find a task
-func FindTask(c *gin.Context) { // Get model if exist
-	var task models.Task
-
-	db := c.MustGet("db").(*gorm.DB)
-	if err := db.Where("id = ?", c.Param("id")).First(&task).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Record not found!"})
-		return
-	}
 
 	c.JSON(http.StatusOK, gin.H{"data": task})
 }

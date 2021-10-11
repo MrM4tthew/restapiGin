@@ -5,19 +5,6 @@ import (
 	"restapiGin/routes"
 )
 
-//var client *redis.Client
-
-//func init() {
-//	//Initializing redis
-//	client = redis.NewClient(&redis.Options{
-//		Addr: environment.ViperEnvVariable("localhost:6379"), //redis port
-//	})
-//	_, err := client.Ping().Result()
-//	if err != nil {
-//		panic(err)
-//	}
-//}
-
 func main() {
 
 	db := models.SetupDB()
@@ -35,7 +22,7 @@ func main() {
 	r := routes.SetupRoutes(db)
 	r.Run()
 
-	//tokenString, err := service.GenerateJWT()
+	//tokenString, err := service.CreateToken("bennett", "tedja2727@gmail.com")
 	//
 	//if err != nil {
 	//	fmt.Println("Error generating token string")
