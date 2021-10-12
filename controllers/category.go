@@ -79,7 +79,7 @@ func CreateCategory(c *gin.Context) {
 	//userUuid2, _ := uuid.FromString("4ea0b2d3-df62-4542-9f36-5d62ae6dc229")
 
 	// Create category
-	category := models.Category{ Name: input.Name, UserId: userUuid}
+	category := models.Category{Name: input.Name, UserId: userUuid}
 
 	db := c.MustGet("db").(*gorm.DB)
 	db.Create(&category)
