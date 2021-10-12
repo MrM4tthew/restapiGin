@@ -83,7 +83,7 @@ func Login(c *gin.Context) {
 				c.JSON(http.StatusUnauthorized, gin.H{"message": "wrong password"})
 			} else {
 				//tokenString, err3 := service.CreateToken(user.Username, user.Email)
-				tokenString, err3 := service.CreateToken(user.ID, user.Username, user.Email)
+				tokenString, err3 := service.CreateToken(user.ID)
 
 				if err3 != nil {
 					c.JSON(http.StatusUnprocessableEntity, err3.Error())
