@@ -22,10 +22,12 @@ func FindCategories(c *gin.Context) {
 	tokenAuth, err := service.ExtractTokenMetadata(c.Request)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "unauthorized 1", "err": err})
+		return
 	}
 	userId, err := service.FetchAuth(tokenAuth)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "unauthorized 2", "err": err})
+		return
 	}
 	db := c.MustGet("db").(*gorm.DB)
 	var categories []models.Category
@@ -39,10 +41,12 @@ func FindCategory(c *gin.Context) {
 	tokenAuth, err := service.ExtractTokenMetadata(c.Request)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "unauthorized 1", "err": err})
+		return
 	}
 	userId, err := service.FetchAuth(tokenAuth)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "unauthorized 2", "err": err})
+		return
 	}
 
 	db := c.MustGet("db").(*gorm.DB)
@@ -68,10 +72,12 @@ func CreateCategory(c *gin.Context) {
 	tokenAuth, err := service.ExtractTokenMetadata(c.Request)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "unauthorized 1", "err": err})
+		return
 	}
 	userId, err := service.FetchAuth(tokenAuth)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "unauthorized 2", "err": userId})
+		return
 	}
 
 	// Convert id from string to uuid type
