@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	uuid "github.com/satori/go.uuid"
 	"net/http"
 	"restapiGin/models"
 	"restapiGin/service"
@@ -11,9 +12,10 @@ import (
 )
 
 type CreateTaskInput struct {
-	AssingedTo string `json:"assignedTo"`
-	Task       string `json:"task"`
-	Deadline   string `json:"deadline"`
+	AssingedTo string    `json:"assignedTo"`
+	Task       string    `json:"task"`
+	Deadline   string    `json:"deadline"`
+	CategoryId uuid.UUID `json:"category_id"`
 }
 
 type UpdateTaskInput struct {
@@ -35,7 +37,7 @@ func FindTasks(c *gin.Context) {
 	}
 	db := c.MustGet("db").(*gorm.DB)
 	var tasks []models.Task
-	db.Where("id = ?", userId).Find(&tasks)
+	db.Where("user_id = ?", userId).Find(&tasks)
 
 	c.JSON(http.StatusOK, gin.H{"data": tasks})
 }
@@ -57,6 +59,7 @@ func FindTask(c *gin.Context) { // Get model if exist
 // POST /tasks
 // Create new task
 func CreateTask(c *gin.Context) {
+	db := c.MustGet("db").(*gorm.DB)
 	// Validate input
 	var input CreateTaskInput
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -66,10 +69,26 @@ func CreateTask(c *gin.Context) {
 	date := "2006-01-02"
 	deadline, _ := time.Parse(date, input.Deadline)
 
-	// Create task
-	task := models.Task{AssingedTo: input.AssingedTo, Task: input.Task, Deadline: deadline}
+	tokenAuth, err := service.ExtractTokenMetadata(c.Request)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "unauthorized 1", "err": err})
+	}
+	userId, err := service.FetchAuth(tokenAuth)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "unauthorized 2", "err": userId})
+	}
+	userUuid, _ := uuid.FromString(userId)
 
-	db := c.MustGet("db").(*gorm.DB)
+	var categories models.Category
+
+	if categoryErr := db.Where("id = ? AND user_id = ? ", input.CategoryId, userUuid).First(&categories).Error; categoryErr != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Category not found!!"})
+		return
+	}
+
+	// Create task
+	task := models.Task{AssingedTo: input.AssingedTo, Task: input.Task, Deadline: deadline, UserId: userUuid, CategoryId: input.CategoryId}
+
 	db.Create(&task)
 
 	c.JSON(http.StatusOK, gin.H{"data": task})
