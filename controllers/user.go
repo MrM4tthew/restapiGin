@@ -71,12 +71,12 @@ func Login(c *gin.Context) {
 
 	// Check input first
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 	} else {
 		// Do this if input is successfully executed
 		// Check if user is in database
 		if err2 := db.Where("email = ?", input.Email).First(&user).Error; err2 != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Record not found!"})
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Record not found!"})
 			return
 		} else {
 			if match := CheckPasswordHash(input.Password, user.Password); match == false {
@@ -102,7 +102,7 @@ func Login(c *gin.Context) {
 				}
 
 				//c.JSON(http.StatusOK, gin.H{"data": tokens})
-				c.JSON(http.StatusOK, gin.H{"data": tokens, "userid": user.ID})
+				c.JSON(http.StatusOK, gin.H{"a_token": tokens["access_token"], "r_token": tokens["refresh_token"], "userid": user.ID, "username": user.Username})
 			}
 
 		}

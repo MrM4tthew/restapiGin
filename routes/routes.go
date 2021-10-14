@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 	"restapiGin/controllers"
+	"restapiGin/middleware"
 )
 
 func SetupRoutes(db *gorm.DB) *gin.Engine {
@@ -11,6 +12,9 @@ func SetupRoutes(db *gorm.DB) *gin.Engine {
 	r.Use(func(c *gin.Context) {
 		c.Set("db", db)
 	})
+
+	r.Use(middleware.CORSMiddleware())
+	//r.Use(cors.Default())
 
 	//Refresh route
 	r.POST("/token/refresh", controllers.Refresh)
